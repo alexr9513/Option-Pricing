@@ -1,6 +1,8 @@
 #pragma once
 # include "Option.h"
 
+class BlackScholesPricer;
+
 class EuropeanVanillaOption : Option {
 
 	private:
@@ -11,5 +13,6 @@ class EuropeanVanillaOption : Option {
 		double GetStrike() const;
 		enum optionType { call, put };
 		virtual optionType GetOptionType() const = 0;
+		friend class BlackScholesPricer;
 		virtual ~EuropeanVanillaOption() = default;
 };
