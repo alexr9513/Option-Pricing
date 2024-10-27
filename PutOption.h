@@ -1,7 +1,7 @@
 #pragma once
 #include "EuropeanVanillaOption.h"
 
-class PutOption : EuropeanVanillaOption {
+class PutOption : public EuropeanVanillaOption {
 public :
 	PutOption(double strike, double expiry);
 	double payoff(double S) const override;
