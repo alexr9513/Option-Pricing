@@ -3,7 +3,7 @@
 
 class BlackScholesPricer;
 
-class EuropeanVanillaOption : Option {
+class EuropeanVanillaOption : public Option {
 
 	private:
 		double _strike;
