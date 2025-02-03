@@ -1,48 +1,48 @@
 #pragma once
-#include <iostream>
 #include <vector>
+#include <iostream>
 
 template <typename T>
-class BinaryTree
-{
+class BinaryTree {
 private:
-	int _depth;
-	std::vector<std::vector<T>> _tree;
+    int _depth;
+    std::vector<std::vector<T>> _tree;
+
 public:
-	void SetDepth(int depth);
-	void SetNode(int,int,T);
-	T GetNode(int,int);
-	void display();
+    BinaryTree() : _depth(0) {}
+
+    void setDepth(int depth) {
+        _depth = depth;
+        _tree.resize(depth + 1);
+        for (int i = 0; i <= depth; ++i) {
+            _tree[i].resize(i + 1);
+        }
+    }
+
+    void setNode(int depth, int index, T value) {
+        if (depth >= 0 && depth < _tree.size() && index >= 0 && index < _tree[depth].size()) {
+            _tree[depth][index] = value;
+        }
+        else {
+            throw std::out_of_range("Invalid depth or index");
+        }
+    }
+
+    T getNode(int depth, int index) const {
+        if (depth >= 0 && depth < _tree.size() && index >= 0 && index < _tree[depth].size()) {
+            return _tree[depth][index];
+        }
+        else {
+            throw std::out_of_range("Invalid depth or index");
+        }
+    }
+
+    void display() const {
+        for (const auto& level : _tree) {
+            for (const auto& node : level) {
+                std::cout << node << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
 };
-
-template <typename T>
-void BinaryTree<T>::SetDepth(int depth) {
-	_depth = depth;
-	_tree.resize(_depth);
-	for (int i = 0; i < _depth; i++)
-	{
-		_tree[i].resize(1 << i);
-	}
-}
-
-template <typename T>
-void BinaryTree<T>::SetNode(int i, int j, T value) {
-	_tree[i][j] = value;
-}
-
-template <typename T>
-T BinaryTree<T>::GetNode(int i, int j) {
-	return _tree[i][j];
-}
-
-template <typename T>
-void BinaryTree<T>::display() {
-	for (const auto& vec : _tree) {
-		for (const auto& value : vec)
-		{
-			std::cout << value << " ";
-		}
-		std::cout << std::endl;
-	}
-}
-

@@ -1,11 +1,11 @@
 #pragma once
-#include "EuropeanVanillaOption.h"
+#include "AmericanOption.h"
 #include "OptionType.h"
 
-class CallOption : public EuropeanVanillaOption {
+class AmericanCallOption : public AmericanOption {
 public:
-    CallOption(double expiry, double strike)
-        : EuropeanVanillaOption(expiry, strike) {}
+    AmericanCallOption(double expiry, double strike)
+        : AmericanOption(expiry, strike) {}
 
     double payoff(double assetPrice) const override {
         return (assetPrice > _strike) ? (assetPrice - _strike) : 0.0;

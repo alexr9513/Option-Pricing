@@ -1,18 +1,19 @@
 #pragma once
-#include "EuropeanVanillaOption.h"
+#include "Option.h"
+#include <cmath>
 
 class BlackScholesPricer {
-
 private:
-	EuropeanVanillaOption* _option;
-	double _S;
-	double _r;
-	double _sigma;
+    Option* _option;
+    double _assetPrice;
+    double _interestRate;
+    double _volatility;
+
+    double d1() const;
+    double d2() const;
 
 public:
-	BlackScholesPricer(EuropeanVanillaOption* option, double asset_price,
-		double interest_rate, double volatility);
-	double operator()() const;
-	double delta() const;
-
+    BlackScholesPricer(Option* option, double assetPrice, double interestRate, double volatility);
+    double operator()() const;
+    double delta() const;
 };

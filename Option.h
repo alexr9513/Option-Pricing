@@ -1,15 +1,23 @@
 #pragma once
-#include <iostream>
+#include <vector>
+#include "OptionType.h"
 
-class Option
-{
-	private :
-		double _expiry;
+class Option {
+protected:
+    double _expiry;
 
-	public:
-		Option(double e);
-		double GetExpiry() const;
-		virtual double payoff(double) const = 0;
-		virtual ~Option() = default;
+public:
+    explicit Option(double expiry) : _expiry(expiry) {}
+    virtual ~Option() = default;
 
+    virtual OptionType getOptionType() const = 0;
+
+    double getExpiry() const { return _expiry; }
+    virtual double getStrike() const = 0;
+    virtual bool isDigital() const { return false; }
+
+    virtual double payoff(double assetPrice) const = 0;
+    virtual double payoffPath(const std::vector<double>& assetPrices) const { return payoff(assetPrices.back()); };
+    virtual bool isAsianOption() const { return false; }
+    virtual bool isAmericanOption() const { return false; }
 };

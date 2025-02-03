@@ -1,51 +1,62 @@
 #pragma once
 #include "BlackScholesPricer.h"
 #include <cmath>
+#include <algorithm>
 
-// Standard normal cumulative distribution function
-double N(double x) {
-	return 0.5 * std::erfc(-x / std::sqrt(2));
+BlackScholesPricer::BlackScholesPricer(Option* option, double assetPrice, double interestRate, double volatility)
+    : _option(option), _assetPrice(assetPrice), _interestRate(interestRate), _volatility(volatility) {}
+
+double BlackScholesPricer::d1() const {
+    return (std::log(_assetPrice / _option->getStrike()) +
+        (_interestRate + 0.5 * _volatility * _volatility) * _option->getExpiry()) /
+        (_volatility * std::sqrt(_option->getExpiry()));
 }
 
-BlackScholesPricer::BlackScholesPricer(EuropeanVanillaOption* option, double asset_price,
-	double interest_rate, double volatility) 
-	: _option(option), _S(asset_price), _r(interest_rate), _sigma(volatility) {}
+double BlackScholesPricer::d2() const {
+    return d1() - _volatility * std::sqrt(_option->getExpiry());
+}
 
 double BlackScholesPricer::operator()() const {
-	double T = _option->GetExpiry();
-	double K = _option->GetStrike();
-	double S = _S;
-	double r = _r;
-	double sigma = _sigma;
+    double S = _assetPrice;
+    double K = _option->getStrike();
+    double T = _option->getExpiry();
+    double r = _interestRate;
+    double sigma = _volatility;
 
-	double d1 = (std::log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * std::sqrt(T));
-	double d2 = d1 - sigma * std::sqrt(T);
-
-	if(_option->GetOptionType() == EuropeanVanillaOption::call)
-	{
-		return S * N(d1) - N(d2) * K * std::exp(-r * T);
-	}
-	else
-	{
-		return N(-d2) * K * std::exp(-r * T) - N(-d1) * S;
-	}
+    if (_option->isDigital()) {
+        // Digital options pricing
+        if (_option->getOptionType() == OptionType::Call) { // Digital call
+            return std::exp(-r * T) * 0.5 * std::erfc(-d2() / std::sqrt(2));
+        }
+        else { // Digital put
+            return std::exp(-r * T) * 0.5 * std::erfc(d2() / std::sqrt(2));
+        }
+    }
+    else {
+        // Vanilla options pricing
+        if (_option->getOptionType() == OptionType::Call) { // Call
+            return S * 0.5 * std::erfc(-d1() / std::sqrt(2)) -
+                K * std::exp(-r * T) * 0.5 * std::erfc(-d2() / std::sqrt(2));
+        }
+        else { // Put
+            return K * std::exp(-r * T) * 0.5 * std::erfc(d2() / std::sqrt(2)) -
+                S * 0.5 * std::erfc(d1() / std::sqrt(2));
+        }
+    }
 }
 
 double BlackScholesPricer::delta() const {
-	double T = _option->GetExpiry();
-	double K = _option->GetStrike();
-	double S = _S;
-	double r = _r;
-	double sigma = _sigma;
-
-	double d1 = (std::log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * std::sqrt(T));
-
-	if (_option->GetOptionType() == EuropeanVanillaOption::call)
-	{
-		return N(d1);
-	}
-	else
-	{
-		return -N(-d1);
-	}
+    double M_PI = 3.14159265358979323846;
+    if (_option->isDigital()) {
+        // Digital options delta
+        return (_option->getOptionType() == OptionType::Call)
+            ? std::exp(-0.5 * d2() * d2()) / (_volatility * std::sqrt(2 * M_PI * _option->getExpiry()))
+            : -std::exp(-0.5 * d2() * d2()) / (_volatility * std::sqrt(2 * M_PI * _option->getExpiry()));
+    }
+    else {
+        // Vanilla options delta
+        return (_option->getOptionType() == OptionType::Call)
+            ? 0.5 * std::erfc(-d1() / std::sqrt(2))
+            : -0.5 * std::erfc(-d1() / std::sqrt(2));
+    }
 }
