@@ -1,4 +1,4 @@
-# C++ for Finance Project
+# Option Pricing in C++
 
 ## Project Overview
 This project involves implementing various financial models in C++ to price different types of options. The project is divided into four main parts:
