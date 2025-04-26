@@ -1,255 +1,235 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Option Pricing Tool</title>
+    <title>Options Pricing Calculator</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        .container { max-width: 800px; }
-        .method-specific { display: none; }
-        .card { margin-bottom: 20px; }
-        .result-section { display: none; }
+        body {
+            background-color: #f8f9fa;
+            padding-top: 2rem;
+        }
+        .container {
+            max-width: 900px;
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+        .result-card {
+            display: none;
+            margin-top: 2rem;
+        }
+        .price-display {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .loading {
+            display: none;
+            margin-top: 1rem;
+        }
     </style>
 </head>
 <body>
-    <div class="container mt-5">
-        <h1 class="mb-4">Option Pricing Tool</h1>
+    <div class="container">
+        <h1 class="text-center mb-4">Options Pricing Calculator</h1>
         
         <div class="card">
-            <div class="card-header">
-                <h5>Option Pricing Parameters</h5>
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Pricing Parameters</h5>
             </div>
             <div class="card-body">
-                <form id="pricingForm">
+                <form id="pricing-form">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label for="pricingMethod" class="form-label">Pricing Method</label>
-                            <select class="form-select" id="pricingMethod" required>
-                                <option value="">Choose a method</option>
+                            <label for="pricing-method" class="form-label">Pricing Method</label>
+                            <select class="form-select" id="pricing-method" required>
                                 <option value="black_scholes">Black-Scholes</option>
                                 <option value="monte_carlo">Monte Carlo</option>
-                                <option value="binomial_tree">Binomial Tree (CRR)</option>
+                                <option value="binomial">Binomial (CRR)</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label for="optionType" class="form-label">Option Type</label>
-                            <select class="form-select" id="optionType" required>
-                                <option value="">Choose an option</option>
+                            <label for="option-type" class="form-label">Option Type</label>
+                            <select class="form-select" id="option-type" required>
                                 <option value="call">European Call</option>
                                 <option value="put">European Put</option>
                                 <option value="digital_call">Digital Call</option>
                                 <option value="digital_put">Digital Put</option>
-                                <option value="american_call" class="american-option">American Call</option>
-                                <option value="american_put" class="american-option">American Put</option>
-                                <option value="asian_call" class="asian-option">Asian Call</option>
-                                <option value="asian_put" class="asian-option">Asian Put</option>
+                                <option value="american_call" class="binomial-only">American Call</option>
+                                <option value="american_put" class="binomial-only">American Put</option>
+                                <option value="asian_call" class="mc-only">Asian Call</option>
+                                <option value="asian_put" class="mc-only">Asian Put</option>
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="S0" class="form-label">Initial Stock Price (S0)</label>
-                            <input type="number" class="form-control" id="S0" step="0.01" required>
+                            <input type="number" class="form-control" id="S0" step="0.01" min="0.01" value="100" required>
                         </div>
                         <div class="col-md-6">
                             <label for="K" class="form-label">Strike Price (K)</label>
-                            <input type="number" class="form-control" id="K" step="0.01" required>
+                            <input type="number" class="form-control" id="K" step="0.01" min="0.01" value="100" required>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label for="T" class="form-label">Time to Maturity (T) in years</label>
-                            <input type="number" class="form-control" id="T" step="0.01" required>
+                            <input type="number" class="form-control" id="T" step="0.01" min="0.01" max="30" value="1" required>
                         </div>
                         <div class="col-md-4">
                             <label for="r" class="form-label">Risk-free Rate (r)</label>
-                            <input type="number" class="form-control" id="r" step="0.001" required>
+                            <input type="number" class="form-control" id="r" step="0.001" min="0" max="1" value="0.05" required>
                         </div>
                         <div class="col-md-4">
-                            <label for="sigma" class="form-label">Volatility (sigma)</label>
-                            <input type="number" class="form-control" id="sigma" step="0.01" required>
+                            <label for="sigma" class="form-label">Volatility (σ)</label>
+                            <input type="number" class="form-control" id="sigma" step="0.01" min="0.01" max="2" value="0.2" required>
                         </div>
                     </div>
-                    
-                    <!-- Monte Carlo Specific Parameters -->
-                    <div id="monteCarloParams" class="method-specific">
+
+                    <!-- Monte Carlo specific parameters -->
+                    <div id="mc-params" class="method-specific-params" style="display: none;">
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="m" class="form-label">Fixings per Year (m)</label>
-                                <input type="number" class="form-control" id="m" value="12">
+                                <input type="number" class="form-control" id="m" step="1" min="1" value="12">
                             </div>
                             <div class="col-md-4">
-                                <label for="nbSimulations" class="form-label">Number of Simulations</label>
-                                <input type="number" class="form-control" id="nbSimulations" value="10000">
+                                <label for="nb_simulations" class="form-label">Simulations per Batch</label>
+                                <input type="number" class="form-control" id="nb_simulations" step="1000" min="1000" value="10000">
                             </div>
                             <div class="col-md-4">
-                                <label for="ciTarget" class="form-label">Confidence Interval Target</label>
-                                <input type="number" class="form-control" id="ciTarget" step="0.01" value="0.1">
+                                <label for="ci_target" class="form-label">CI Target Width</label>
+                                <input type="number" class="form-control" id="ci_target" step="0.01" min="0.01" value="0.1">
                             </div>
                         </div>
                     </div>
-                    
-                    <!-- Binomial Tree Specific Parameters -->
-                    <div id="binomialParams" class="method-specific">
+
+                    <!-- Binomial tree specific parameters -->
+                    <div id="binomial-params" class="method-specific-params" style="display: none;">
                         <div class="row mb-3">
-                            <div class="col-md-3">
+                            <div class="col-md-6">
                                 <label for="N" class="form-label">Number of Steps (N)</label>
-                                <input type="number" class="form-control" id="N" value="100">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="U" class="form-label">Up Factor (U)</label>
-                                <input type="number" class="form-control" id="U" step="0.001" value="1.01">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="D" class="form-label">Down Factor (D)</label>
-                                <input type="number" class="form-control" id="D" step="0.001" value="0.99">
-                            </div>
-                            <div class="col-md-3">
-                                <label for="R" class="form-label">Risk-free Rate per Period</label>
-                                <input type="number" class="form-control" id="R" step="0.001">
+                                <input type="number" class="form-control" id="N" step="10" min="10" value="100">
                             </div>
                         </div>
                     </div>
-                    
-                    <button type="submit" class="btn btn-primary">Calculate Price</button>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Calculate Price</button>
+                    </div>
                 </form>
+
+                <div class="loading text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p>Calculating price...</p>
+                </div>
             </div>
         </div>
-        
-        <div class="card result-section" id="resultSection">
-            <div class="card-header">
-                <h5>Pricing Result</h5>
+
+        <div id="result-card" class="card result-card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">Pricing Result</h5>
             </div>
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Option Type:</strong> <span id="resultOptionType"></span></p>
-                        <p><strong>Pricing Method:</strong> <span id="resultPricingMethod"></span></p>
-                    </div>
-                    <div class="col-md-6">
-                        <p><strong>Option Price:</strong> <span id="resultPrice" class="text-success fw-bold"></span></p>
-                    </div>
+                <div class="text-center">
+                    <h6>Option Price:</h6>
+                    <div class="price-display" id="price-result">--</div>
                 </div>
-                <div id="resultError" class="alert alert-danger" style="display: none;"></div>
+                <div id="pricing-summary" class="mt-3">
+                </div>
             </div>
         </div>
+
+        <div id="error-alert" class="alert alert-danger mt-3" style="display: none;">
+        </div>
     </div>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Map pricing methods to human-readable names
-            const methodNames = {
-                'black_scholes': 'Black-Scholes',
-                'monte_carlo': 'Monte Carlo Simulation',
-                'binomial_tree': 'Binomial Tree (CRR)'
-            };
+            const pricingMethodSelect = document.getElementById('pricing-method');
+            const optionTypeSelect = document.getElementById('option-type');
+            const pricingForm = document.getElementById('pricing-form');
+            const resultCard = document.getElementById('result-card');
+            const priceResult = document.getElementById('price-result');
+            const pricingSummary = document.getElementById('pricing-summary');
+            const errorAlert = document.getElementById('error-alert');
+            const loadingIndicator = document.querySelector('.loading');
             
-            // Map option types to human-readable names
-            const optionNames = {
-                'call': 'European Call',
-                'put': 'European Put',
-                'digital_call': 'Digital Call',
-                'digital_put': 'Digital Put',
-                'american_call': 'American Call',
-                'american_put': 'American Put',
-                'asian_call': 'Asian Call',
-                'asian_put': 'Asian Put'
-            };
-            
-            // Show/hide method-specific parameters
-            document.getElementById('pricingMethod').addEventListener('change', function() {
-                const method = this.value;
+            // Show/hide method-specific parameters based on pricing method
+            pricingMethodSelect.addEventListener('change', function() {
+                const method = pricingMethodSelect.value;
+                document.querySelectorAll('.method-specific-params').forEach(el => el.style.display = 'none');
                 
-                // Hide all method-specific sections
-                document.querySelectorAll('.method-specific').forEach(el => {
-                    el.style.display = 'none';
-                });
-                
-                // Show the appropriate method-specific section
                 if (method === 'monte_carlo') {
-                    document.getElementById('monteCarloParams').style.display = 'block';
+                    document.getElementById('mc-params').style.display = 'block';
                     
-                    // Show Asian options for Monte Carlo
-                    document.querySelectorAll('.asian-option').forEach(el => {
-                        el.style.display = 'block';
+                    // Filter option types for Monte Carlo
+                    Array.from(optionTypeSelect.options).forEach(option => {
+                        if (option.classList.contains('binomial-only')) {
+                            option.disabled = true;
+                        } else if (option.classList.contains('mc-only')) {
+                            option.disabled = false;
+                        } else {
+                            option.disabled = false;
+                        }
                     });
-                } else {
-                    document.querySelectorAll('.asian-option').forEach(el => {
-                        el.style.display = 'none';
+                } else if (method === 'binomial') {
+                    document.getElementById('binomial-params').style.display = 'block';
+                    
+                    // Filter option types for Binomial
+                    Array.from(optionTypeSelect.options).forEach(option => {
+                        if (option.classList.contains('mc-only')) {
+                            option.disabled = true;
+                        } else {
+                            option.disabled = false;
+                        }
+                    });
+                } else { // Black-Scholes
+                    // Filter option types for Black-Scholes
+                    Array.from(optionTypeSelect.options).forEach(option => {
+                        if (option.classList.contains('mc-only') || option.classList.contains('binomial-only')) {
+                            option.disabled = true;
+                        } else {
+                            option.disabled = false;
+                        }
                     });
                 }
                 
-                if (method === 'binomial_tree') {
-                    document.getElementById('binomialParams').style.display = 'block';
-                    
-                    // Show American options for binomial tree
-                    document.querySelectorAll('.american-option').forEach(el => {
-                        el.style.display = 'block';
-                    });
-                    
-                    // Calculate R from r and T/N
-                    const r = parseFloat(document.getElementById('r').value);
-                    const T = parseFloat(document.getElementById('T').value);
-                    const N = parseFloat(document.getElementById('N').value);
-                    
-                    if (!isNaN(r) && !isNaN(T) && !isNaN(N) && N > 0) {
-                        const R = Math.exp(r * (T / N));
-                        document.getElementById('R').value = R.toFixed(6);
-                    }
-                } else {
-                    document.querySelectorAll('.american-option').forEach(el => {
-                        el.style.display = 'none';
-                    });
-                }
-                
-                // Reset option type if needed
-                const optionType = document.getElementById('optionType');
-                if ((method !== 'monte_carlo' && (optionType.value === 'asian_call' || optionType.value === 'asian_put')) ||
-                    (method !== 'binomial_tree' && (optionType.value === 'american_call' || optionType.value === 'american_put'))) {
-                    optionType.value = '';
-                }
-            });
-            
-            // Auto-calculate R when r, T, or N changes
-            ['r', 'T', 'N'].forEach(id => {
-                document.getElementById(id).addEventListener('input', function() {
-                    if (document.getElementById('pricingMethod').value === 'binomial_tree') {
-                        const r = parseFloat(document.getElementById('r').value);
-                        const T = parseFloat(document.getElementById('T').value);
-                        const N = parseFloat(document.getElementById('N').value);
-                        
-                        if (!isNaN(r) && !isNaN(T) && !isNaN(N) && N > 0) {
-                            const R = Math.exp(r * (T / N));
-                            document.getElementById('R').value = R.toFixed(6);
+                // Reset to first valid option if current selection is invalid
+                if (optionTypeSelect.options[optionTypeSelect.selectedIndex].disabled) {
+                    for (let i = 0; i < optionTypeSelect.options.length; i++) {
+                        if (!optionTypeSelect.options[i].disabled) {
+                            optionTypeSelect.selectedIndex = i;
+                            break;
                         }
                     }
-                });
+                }
             });
             
-            // Form submission
-            document.getElementById('pricingForm').addEventListener('submit', function(e) {
-                e.preventDefault();
+            // Trigger change event to set initial state
+            pricingMethodSelect.dispatchEvent(new Event('change'));
+            
+            // Handle form submission
+            pricingForm.addEventListener('submit', function(event) {
+                event.preventDefault();
                 
-                const method = document.getElementById('pricingMethod').value;
-                const optionType = document.getElementById('optionType').value;
+                // Hide any previous errors
+                errorAlert.style.display = 'none';
+                resultCard.style.display = 'none';
+                loadingIndicator.style.display = 'block';
                 
-                // Basic validation
-                if (!method || !optionType) {
-                    alert('Please select both a pricing method and an option type.');
-                    return;
-                }
-                
-                // Hide any previous error
-                document.getElementById('resultError').style.display = 'none';
-                
-                // Prepare data based on pricing method
-                let data = {
+                // Build request data
+                const method = pricingMethodSelect.value;
+                const data = {
                     pricing_method: method,
-                    option_type: optionType,
+                    option_type: optionTypeSelect.value,
                     S0: parseFloat(document.getElementById('S0').value),
                     K: parseFloat(document.getElementById('K').value),
                     T: parseFloat(document.getElementById('T').value),
@@ -257,21 +237,17 @@
                     sigma: parseFloat(document.getElementById('sigma').value)
                 };
                 
+                // Add method-specific parameters
                 if (method === 'monte_carlo') {
                     data.m = parseInt(document.getElementById('m').value);
-                    data.nb_simulations = parseInt(document.getElementById('nbSimulations').value);
-                    data.ci_target = parseFloat(document.getElementById('ciTarget').value);
-                }
-                
-                if (method === 'binomial_tree') {
+                    data.nb_simulations = parseInt(document.getElementById('nb_simulations').value);
+                    data.ci_target = parseFloat(document.getElementById('ci_target').value);
+                } else if (method === 'binomial') {
                     data.N = parseInt(document.getElementById('N').value);
-                    data.U = parseFloat(document.getElementById('U').value);
-                    data.D = parseFloat(document.getElementById('D').value);
-                    data.R = parseFloat(document.getElementById('R').value);
                 }
                 
-                // Send the request to the server
-                fetch('/price', {
+                // Make API request
+                fetch('/api/price', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -280,24 +256,70 @@
                 })
                 .then(response => response.json())
                 .then(result => {
+                    loadingIndicator.style.display = 'none';
+                    
                     if (result.error) {
-                        document.getElementById('resultError').textContent = result.error;
-                        document.getElementById('resultError').style.display = 'block';
-                    } else {
-                        // Display results
-                        document.getElementById('resultOptionType').textContent = optionNames[optionType];
-                        document.getElementById('resultPricingMethod').textContent = methodNames[method];
-                        document.getElementById('resultPrice').textContent = result.price.toFixed(6);
-                        document.getElementById('resultSection').style.display = 'block';
+                        errorAlert.textContent = `Error: ${result.error}`;
+                        errorAlert.style.display = 'block';
+                        return;
                     }
+                    
+                    // Display the result
+                    priceResult.textContent = result.price.toFixed(6);
+                    resultCard.style.display = 'block';
+                    
+                    // Build summary of parameters
+                    let summaryHTML = '<table class="table table-sm">';
+                    summaryHTML += `<tr><th>Method:</th><td>${getMethodName(method)}</td></tr>`;
+                    summaryHTML += `<tr><th>Option Type:</th><td>${getOptionTypeName(data.option_type)}</td></tr>`;
+                    summaryHTML += `<tr><th>Stock Price (S₀):</th><td>${data.S0}</td></tr>`;
+                    summaryHTML += `<tr><th>Strike Price (K):</th><td>${data.K}</td></tr>`;
+                    summaryHTML += `<tr><th>Time to Maturity (T):</th><td>${data.T} years</td></tr>`;
+                    summaryHTML += `<tr><th>Risk-free Rate:</th><td>${(data.r * 100).toFixed(2)}%</td></tr>`;
+                    summaryHTML += `<tr><th>Volatility (σ):</th><td>${(data.sigma * 100).toFixed(2)}%</td></tr>`;
+                    
+                    if (method === 'monte_carlo') {
+                        summaryHTML += `<tr><th>Fixings per Year:</th><td>${data.m}</td></tr>`;
+                        summaryHTML += `<tr><th>Simulations per Batch:</th><td>${data.nb_simulations}</td></tr>`;
+                        summaryHTML += `<tr><th>CI Target Width:</th><td>${data.ci_target}</td></tr>`;
+                    } else if (method === 'binomial') {
+                        summaryHTML += `<tr><th>Number of Steps:</th><td>${data.N}</td></tr>`;
+                    }
+                    
+                    summaryHTML += '</table>';
+                    pricingSummary.innerHTML = summaryHTML;
                 })
                 .catch(error => {
-                    document.getElementById('resultError').textContent = 'Error: ' + error.message;
-                    document.getElementById('resultError').style.display = 'block';
+                    loadingIndicator.style.display = 'none';
+                    errorAlert.textContent = `Error: ${error.message}`;
+                    errorAlert.style.display = 'block';
                 });
             });
+            
+            // Helper functions for displaying nice names
+            function getMethodName(method) {
+                const methods = {
+                    'black_scholes': 'Black-Scholes',
+                    'monte_carlo': 'Monte Carlo Simulation',
+                    'binomial': 'Binomial Tree (CRR)'
+                };
+                return methods[method] || method;
+            }
+            
+            function getOptionTypeName(type) {
+                const types = {
+                    'call': 'European Call',
+                    'put': 'European Put',
+                    'digital_call': 'Digital Call',
+                    'digital_put': 'Digital Put',
+                    'american_call': 'American Call',
+                    'american_put': 'American Put',
+                    'asian_call': 'Asian Call',
+                    'asian_put': 'Asian Put'
+                };
+                return types[type] || type;
+            }
         });
     </script>
 </body>
 </html>
-    
