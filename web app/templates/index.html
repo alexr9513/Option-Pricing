@@ -1,0 +1,303 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Option Pricing Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .container { max-width: 800px; }
+        .method-specific { display: none; }
+        .card { margin-bottom: 20px; }
+        .result-section { display: none; }
+    </style>
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="mb-4">Option Pricing Tool</h1>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5>Option Pricing Parameters</h5>
+            </div>
+            <div class="card-body">
+                <form id="pricingForm">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="pricingMethod" class="form-label">Pricing Method</label>
+                            <select class="form-select" id="pricingMethod" required>
+                                <option value="">Choose a method</option>
+                                <option value="black_scholes">Black-Scholes</option>
+                                <option value="monte_carlo">Monte Carlo</option>
+                                <option value="binomial_tree">Binomial Tree (CRR)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="optionType" class="form-label">Option Type</label>
+                            <select class="form-select" id="optionType" required>
+                                <option value="">Choose an option</option>
+                                <option value="call">European Call</option>
+                                <option value="put">European Put</option>
+                                <option value="digital_call">Digital Call</option>
+                                <option value="digital_put">Digital Put</option>
+                                <option value="american_call" class="american-option">American Call</option>
+                                <option value="american_put" class="american-option">American Put</option>
+                                <option value="asian_call" class="asian-option">Asian Call</option>
+                                <option value="asian_put" class="asian-option">Asian Put</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="S0" class="form-label">Initial Stock Price (S0)</label>
+                            <input type="number" class="form-control" id="S0" step="0.01" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="K" class="form-label">Strike Price (K)</label>
+                            <input type="number" class="form-control" id="K" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="T" class="form-label">Time to Maturity (T) in years</label>
+                            <input type="number" class="form-control" id="T" step="0.01" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="r" class="form-label">Risk-free Rate (r)</label>
+                            <input type="number" class="form-control" id="r" step="0.001" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="sigma" class="form-label">Volatility (sigma)</label>
+                            <input type="number" class="form-control" id="sigma" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <!-- Monte Carlo Specific Parameters -->
+                    <div id="monteCarloParams" class="method-specific">
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label for="m" class="form-label">Fixings per Year (m)</label>
+                                <input type="number" class="form-control" id="m" value="12">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="nbSimulations" class="form-label">Number of Simulations</label>
+                                <input type="number" class="form-control" id="nbSimulations" value="10000">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="ciTarget" class="form-label">Confidence Interval Target</label>
+                                <input type="number" class="form-control" id="ciTarget" step="0.01" value="0.1">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Binomial Tree Specific Parameters -->
+                    <div id="binomialParams" class="method-specific">
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="N" class="form-label">Number of Steps (N)</label>
+                                <input type="number" class="form-control" id="N" value="100">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="U" class="form-label">Up Factor (U)</label>
+                                <input type="number" class="form-control" id="U" step="0.001" value="1.01">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="D" class="form-label">Down Factor (D)</label>
+                                <input type="number" class="form-control" id="D" step="0.001" value="0.99">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="R" class="form-label">Risk-free Rate per Period</label>
+                                <input type="number" class="form-control" id="R" step="0.001">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Calculate Price</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card result-section" id="resultSection">
+            <div class="card-header">
+                <h5>Pricing Result</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Option Type:</strong> <span id="resultOptionType"></span></p>
+                        <p><strong>Pricing Method:</strong> <span id="resultPricingMethod"></span></p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Option Price:</strong> <span id="resultPrice" class="text-success fw-bold"></span></p>
+                    </div>
+                </div>
+                <div id="resultError" class="alert alert-danger" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Map pricing methods to human-readable names
+            const methodNames = {
+                'black_scholes': 'Black-Scholes',
+                'monte_carlo': 'Monte Carlo Simulation',
+                'binomial_tree': 'Binomial Tree (CRR)'
+            };
+            
+            // Map option types to human-readable names
+            const optionNames = {
+                'call': 'European Call',
+                'put': 'European Put',
+                'digital_call': 'Digital Call',
+                'digital_put': 'Digital Put',
+                'american_call': 'American Call',
+                'american_put': 'American Put',
+                'asian_call': 'Asian Call',
+                'asian_put': 'Asian Put'
+            };
+            
+            // Show/hide method-specific parameters
+            document.getElementById('pricingMethod').addEventListener('change', function() {
+                const method = this.value;
+                
+                // Hide all method-specific sections
+                document.querySelectorAll('.method-specific').forEach(el => {
+                    el.style.display = 'none';
+                });
+                
+                // Show the appropriate method-specific section
+                if (method === 'monte_carlo') {
+                    document.getElementById('monteCarloParams').style.display = 'block';
+                    
+                    // Show Asian options for Monte Carlo
+                    document.querySelectorAll('.asian-option').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                } else {
+                    document.querySelectorAll('.asian-option').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                }
+                
+                if (method === 'binomial_tree') {
+                    document.getElementById('binomialParams').style.display = 'block';
+                    
+                    // Show American options for binomial tree
+                    document.querySelectorAll('.american-option').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                    
+                    // Calculate R from r and T/N
+                    const r = parseFloat(document.getElementById('r').value);
+                    const T = parseFloat(document.getElementById('T').value);
+                    const N = parseFloat(document.getElementById('N').value);
+                    
+                    if (!isNaN(r) && !isNaN(T) && !isNaN(N) && N > 0) {
+                        const R = Math.exp(r * (T / N));
+                        document.getElementById('R').value = R.toFixed(6);
+                    }
+                } else {
+                    document.querySelectorAll('.american-option').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                }
+                
+                // Reset option type if needed
+                const optionType = document.getElementById('optionType');
+                if ((method !== 'monte_carlo' && (optionType.value === 'asian_call' || optionType.value === 'asian_put')) ||
+                    (method !== 'binomial_tree' && (optionType.value === 'american_call' || optionType.value === 'american_put'))) {
+                    optionType.value = '';
+                }
+            });
+            
+            // Auto-calculate R when r, T, or N changes
+            ['r', 'T', 'N'].forEach(id => {
+                document.getElementById(id).addEventListener('input', function() {
+                    if (document.getElementById('pricingMethod').value === 'binomial_tree') {
+                        const r = parseFloat(document.getElementById('r').value);
+                        const T = parseFloat(document.getElementById('T').value);
+                        const N = parseFloat(document.getElementById('N').value);
+                        
+                        if (!isNaN(r) && !isNaN(T) && !isNaN(N) && N > 0) {
+                            const R = Math.exp(r * (T / N));
+                            document.getElementById('R').value = R.toFixed(6);
+                        }
+                    }
+                });
+            });
+            
+            // Form submission
+            document.getElementById('pricingForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const method = document.getElementById('pricingMethod').value;
+                const optionType = document.getElementById('optionType').value;
+                
+                // Basic validation
+                if (!method || !optionType) {
+                    alert('Please select both a pricing method and an option type.');
+                    return;
+                }
+                
+                // Hide any previous error
+                document.getElementById('resultError').style.display = 'none';
+                
+                // Prepare data based on pricing method
+                let data = {
+                    pricing_method: method,
+                    option_type: optionType,
+                    S0: parseFloat(document.getElementById('S0').value),
+                    K: parseFloat(document.getElementById('K').value),
+                    T: parseFloat(document.getElementById('T').value),
+                    r: parseFloat(document.getElementById('r').value),
+                    sigma: parseFloat(document.getElementById('sigma').value)
+                };
+                
+                if (method === 'monte_carlo') {
+                    data.m = parseInt(document.getElementById('m').value);
+                    data.nb_simulations = parseInt(document.getElementById('nbSimulations').value);
+                    data.ci_target = parseFloat(document.getElementById('ciTarget').value);
+                }
+                
+                if (method === 'binomial_tree') {
+                    data.N = parseInt(document.getElementById('N').value);
+                    data.U = parseFloat(document.getElementById('U').value);
+                    data.D = parseFloat(document.getElementById('D').value);
+                    data.R = parseFloat(document.getElementById('R').value);
+                }
+                
+                // Send the request to the server
+                fetch('/price', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.error) {
+                        document.getElementById('resultError').textContent = result.error;
+                        document.getElementById('resultError').style.display = 'block';
+                    } else {
+                        // Display results
+                        document.getElementById('resultOptionType').textContent = optionNames[optionType];
+                        document.getElementById('resultPricingMethod').textContent = methodNames[method];
+                        document.getElementById('resultPrice').textContent = result.price.toFixed(6);
+                        document.getElementById('resultSection').style.display = 'block';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('resultError').textContent = 'Error: ' + error.message;
+                    document.getElementById('resultError').style.display = 'block';
+                });
+            });
+        });
+    </script>
+</body>
+</html>
+    

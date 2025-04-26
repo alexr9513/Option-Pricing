@@ -10,8 +10,8 @@
 #include "CRRPricer.h"
 
 int main(int argc, char* argv[]) {
-    if (argc < 11) {
-        std::cerr << "Usage: ./crr_pricer option_type S0 K T r sigma N U D R\n";
+    if (argc < 8) {
+        std::cerr << "Usage: ./crr_pricer option_type S0 K T r sigma N\n";
         return 1;
     }
 
@@ -21,10 +21,7 @@ int main(int argc, char* argv[]) {
     double T = atof(argv[4]);
     double r = atof(argv[5]);
     double sigma = atof(argv[6]);
-    double N = atof(argv[7]); // number of steps in the binomial tree
-    double U = atof(argv[8]); // up factor (as a % increase)
-    double D = atof(argv[9]); // down factor (as a % decrease)
-    double R = atof(argv[10]); // risk-free rate per period
+    int N = atoi(argv[7]); // number of steps in the binomial tree
 
     Option* option = nullptr;
 
@@ -45,8 +42,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
 
-    // Build CRR pricer
-    CRRPricer pricer(option, N, S0, U, D, R);
+    // Build CRR pricer using r and sigma
+    CRRPricer pricer(option, N, S0, r, sigma);
     pricer.compute();
     double price = pricer();
 
