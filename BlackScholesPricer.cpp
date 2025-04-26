@@ -46,12 +46,12 @@ double BlackScholesPricer::operator()() const {
 }
 
 double BlackScholesPricer::delta() const {
-    double M_PI = 3.14159265358979323846;
+    double pi = 3.14159265358979323846;
     if (_option->isDigital()) {
         // Digital options delta
         return (_option->getOptionType() == OptionType::Call)
-            ? std::exp(-0.5 * d2() * d2()) / (_volatility * std::sqrt(2 * M_PI * _option->getExpiry()))
-            : -std::exp(-0.5 * d2() * d2()) / (_volatility * std::sqrt(2 * M_PI * _option->getExpiry()));
+            ? std::exp(-0.5 * d2() * d2()) / (_volatility * std::sqrt(2 * pi * _option->getExpiry()))
+            : -std::exp(-0.5 * d2() * d2()) / (_volatility * std::sqrt(2 * pi * _option->getExpiry()));
     }
     else {
         // Vanilla options delta
